@@ -1,0 +1,960 @@
+basePath: /api/v1
+definitions:
+  apperror.AppError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  db.Equipment:
+    properties:
+      brand:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      identifier:
+        type: string
+      model:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  db.Loan:
+    properties:
+      created_at:
+        type: string
+      due_at:
+        type: string
+      equipment_id:
+        type: integer
+      id:
+        type: integer
+      notes:
+        type: string
+      returned_at:
+        type: string
+      returned_by:
+        type: integer
+      status:
+        type: string
+      user_id:
+        type: integer
+      withdrawn_at:
+        type: string
+      withdrawn_by:
+        type: integer
+    type: object
+  db.Maintenance:
+    properties:
+      description:
+        type: string
+      equipment_id:
+        type: integer
+      finished_at:
+        type: string
+      id:
+        type: integer
+      started_at:
+        type: string
+      status:
+        type: string
+      technician_id:
+        type: integer
+    type: object
+  db.Reservation:
+    properties:
+      created_at:
+        type: string
+      ends_at:
+        type: string
+      equipment_id:
+        type: integer
+      id:
+        type: integer
+      starts_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  db.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      registration:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.CreateEquipmentRequest:
+    properties:
+      brand:
+        minLength: 1
+        type: string
+      identifier:
+        minLength: 2
+        type: string
+      model:
+        minLength: 1
+        type: string
+      status:
+        enum:
+        - AVAILABLE
+        - MAINTENANCE
+        type: string
+    required:
+    - brand
+    - identifier
+    - model
+    type: object
+  dto.CreateLoanRequest:
+    properties:
+      due_at:
+        type: string
+      equipment_id:
+        type: integer
+      notes:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - due_at
+    - equipment_id
+    - user_id
+    type: object
+  dto.CreateMaintenanceRequest:
+    properties:
+      description:
+        minLength: 3
+        type: string
+      equipment_id:
+        type: integer
+      technician_id:
+        type: integer
+    required:
+    - description
+    - equipment_id
+    type: object
+  dto.CreateReservationRequest:
+    properties:
+      ends_at:
+        type: string
+      equipment_id:
+        type: integer
+      starts_at:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - ends_at
+    - equipment_id
+    - starts_at
+    - user_id
+    type: object
+  dto.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+      registration:
+        type: string
+      role:
+        enum:
+        - admin
+        - professor
+        - technician
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - registration
+    - role
+    type: object
+  dto.EmergencyLoanRequest:
+    properties:
+      due_at:
+        type: string
+      equipment_id:
+        type: integer
+      notes:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - due_at
+    - equipment_id
+    - user_id
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UpdateEquipmentRequest:
+    properties:
+      brand:
+        minLength: 1
+        type: string
+      identifier:
+        minLength: 2
+        type: string
+      model:
+        minLength: 1
+        type: string
+      status:
+        enum:
+        - AVAILABLE
+        - LOANED
+        - MAINTENANCE
+        type: string
+    type: object
+  dto.UpdateMaintenanceRequest:
+    properties:
+      description:
+        minLength: 3
+        type: string
+      status:
+        enum:
+        - OPEN
+        - FINISHED
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+      registration:
+        type: string
+      role:
+        enum:
+        - admin
+        - professor
+        - technician
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    type: object
+  services.LoginResult:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/db.User'
+    type: object
+info:
+  contact:
+    name: LostEmp
+  description: 'API de gestão de empréstimos de equipamentos escolares (mockup/MVP).
+    Papéis: admin, professor, technician.'
+  title: LostEmp API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica com e-mail e senha, retornando um JWT.
+      parameters:
+      - description: Credenciais
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.LoginResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Login
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Retorna o usuário autenticado pelo token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Dados do usuário logado
+      tags:
+      - auth
+  /equipments:
+    get:
+      description: Lista o catálogo de equipamentos com filtros por identificador,
+        marca, modelo e status.
+      parameters:
+      - description: Filtro por identificador (parcial)
+        in: query
+        name: identifier
+        type: string
+      - description: Filtro por marca (parcial)
+        in: query
+        name: brand
+        type: string
+      - description: Filtro por modelo (parcial)
+        in: query
+        name: model
+        type: string
+      - description: Filtro por status (AVAILABLE, LOANED, MAINTENANCE)
+        in: query
+        name: status
+        type: string
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar equipamentos
+      tags:
+      - equipments
+    post:
+      consumes:
+      - application/json
+      description: Registra equipamento com identificador único, marca e modelo (RF01).
+      parameters:
+      - description: Dados do equipamento
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateEquipmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Equipment'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Cadastrar equipamento
+      tags:
+      - equipments
+  /equipments/{id}:
+    delete:
+      parameters:
+      - description: ID do equipamento
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Excluir equipamento
+      tags:
+      - equipments
+    get:
+      parameters:
+      - description: ID do equipamento
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Equipment'
+      security:
+      - BearerAuth: []
+      summary: Buscar equipamento
+      tags:
+      - equipments
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID do equipamento
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a atualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateEquipmentRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Equipment'
+      security:
+      - BearerAuth: []
+      summary: Atualizar equipamento
+      tags:
+      - equipments
+  /health:
+    get:
+      description: Retorna status da API e conectividade com o banco.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check
+      tags:
+      - health
+  /loans:
+    get:
+      parameters:
+      - description: Filtro por status (ACTIVE, RETURNED)
+        in: query
+        name: status
+        type: string
+      - description: Filtro por usuário (apenas admin)
+        in: query
+        name: user_id
+        type: integer
+      - description: Filtro por equipamento
+        in: query
+        name: equipment_id
+        type: integer
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar empréstimos
+      tags:
+      - loans
+    post:
+      consumes:
+      - application/json
+      description: Cria um empréstimo vinculando equipamento a um professor.
+      parameters:
+      - description: Dados da retirada
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateLoanRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Loan'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Registrar retirada
+      tags:
+      - loans
+  /loans/{id}/return:
+    post:
+      description: Encerra o empréstimo e devolve o equipamento para AVAILABLE.
+      parameters:
+      - description: ID do empréstimo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Loan'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Registrar devolução
+      tags:
+      - loans
+  /loans/emergency:
+    post:
+      consumes:
+      - application/json
+      description: Cancela reservas ativas/futuras do equipamento e cria o empréstimo.
+      parameters:
+      - description: Dados da retirada de emergência
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmergencyLoanRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Loan'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Retirada de emergência
+      tags:
+      - loans
+  /loans/overdue:
+    get:
+      description: Lista empréstimos ativos com prazo vencido.
+      parameters:
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar empréstimos em atraso
+      tags:
+      - loans
+  /maintenances:
+    get:
+      parameters:
+      - description: Filtro por status (OPEN, FINISHED)
+        in: query
+        name: status
+        type: string
+      - description: Filtro por equipamento
+        in: query
+        name: equipment_id
+        type: integer
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar manutenções
+      tags:
+      - maintenances
+    post:
+      consumes:
+      - application/json
+      description: Registra manutenção e coloca o equipamento como MAINTENANCE.
+      parameters:
+      - description: Dados da manutenção
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateMaintenanceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Maintenance'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Abrir manutenção
+      tags:
+      - maintenances
+  /maintenances/{id}:
+    delete:
+      parameters:
+      - description: ID da manutenção
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Excluir manutenção
+      tags:
+      - maintenances
+    get:
+      parameters:
+      - description: ID da manutenção
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Maintenance'
+      security:
+      - BearerAuth: []
+      summary: Buscar manutenção
+      tags:
+      - maintenances
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID da manutenção
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a atualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateMaintenanceRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.Maintenance'
+      security:
+      - BearerAuth: []
+      summary: Atualizar manutenção
+      tags:
+      - maintenances
+  /reservations:
+    get:
+      parameters:
+      - description: Filtro por status (ACTIVE, CANCELLED, FULFILLED)
+        in: query
+        name: status
+        type: string
+      - description: Filtro por usuário (apenas admin)
+        in: query
+        name: user_id
+        type: integer
+      - description: Filtro por equipamento
+        in: query
+        name: equipment_id
+        type: integer
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar reservas
+      tags:
+      - reservations
+    post:
+      consumes:
+      - application/json
+      description: Reserva um equipamento para um período futuro.
+      parameters:
+      - description: Dados da reserva
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.Reservation'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Criar reserva
+      tags:
+      - reservations
+  /reservations/{id}/cancel:
+    patch:
+      parameters:
+      - description: ID da reserva
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Cancelar reserva
+      tags:
+      - reservations
+  /users:
+    get:
+      description: Lista usuários com filtros opcionais e paginação.
+      parameters:
+      - description: Filtro por papel
+        in: query
+        name: role
+        type: string
+      - description: Filtro por status
+        in: query
+        name: status
+        type: string
+      - description: Página (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Itens por página (default 20, máx 100)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar usuários
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Cadastra um usuário (admin, professor ou técnico).
+      parameters:
+      - description: Dados do usuário
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/db.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      security:
+      - BearerAuth: []
+      summary: Criar usuário
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Excluir usuário
+      tags:
+      - users
+    get:
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.User'
+      security:
+      - BearerAuth: []
+      summary: Buscar usuário
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Campos a atualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.User'
+      security:
+      - BearerAuth: []
+      summary: Atualizar usuário
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
